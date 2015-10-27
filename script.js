@@ -1,5 +1,5 @@
 var G = new vector(0, 0.4); // gravity
-var B = 0.7; // bounciness
+var B = 0.8; // bounciness
 
 var world = [];
 var canvas = document.createElement('canvas');
@@ -49,7 +49,7 @@ function spawn(x, y) {
     return new logo(
         new vector(x, y),
         10 + Math.random() * 50,
-        new vector(Math.cos(a) * 5, -Math.sin(a) * 5)
+        new vector(Math.cos(a) * 10, -Math.sin(a) * 10)
     );
 }
 
@@ -92,14 +92,21 @@ setInterval(function() {
 
         var t = Math.atan2(o.dir.y, o.dir.x);
         o.dir.x = Math.cos(t) * m * 0.98;
-        o.dir.y = Math.sin(t) * m * 0.99;
+        o.dir.y = Math.sin(t) * m * 0.98;
 
-        if (o.p.y + o.r >= 499) {
+        if (o.p.y + o.r > 499) {
             o.dir.y = o.dir.y * -B;
-            if (0 < o.dir.y && o.dir.y < 1) {
-                o.dir.y = 0;
-            }
+            o.p.y -= (o.p.y + o.r - 499) * B;
         }
+        if (o.p.x - o.r < 0) {
+            o.dir.x = o.dir.x * -B;
+            o.p.x += -(o.p.x - o.r) * B;
+        }
+        if (o.p.x + o.r > 499) {
+            o.dir.x = o.dir.x * -B;
+            o.p.x -= (o.p.x + o.r - 499) * B;
+        }
+
         o.p.add(o.dir);
         o.dir.add(G);
     });
