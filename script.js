@@ -2,9 +2,14 @@ var G = new Vector(0, 0.8),
     CANVAS = new Vector(window.innerWidth, window.innerHeight), // gravity
     MAX = 1000,
     B = 0.8, // bounciness
-    world = [],
-    canvas;
+    world = [];
 
+/**
+ * Utility function to iterate over an object and calling the callback
+ *
+ * @param {Object} w
+ * @param {Function} fn
+ */
 function each(w, fn) {
     var i;
     for (i in w) {
@@ -14,30 +19,60 @@ function each(w, fn) {
     }
 }
 
+/**
+ * Vector in 2d space
+ *
+ * @param {number} x
+ * @param {number} y
+ * @constructor
+ */
 function Vector(x, y) {
     this.x = x;
     this.y = y;
 }
 
+/**
+ * Add another vector to this one.
+ *
+ * @param {Vector} v
+ */
 Vector.prototype.add = function(v) {
     this.x += v.x;
     this.y += v.y;
 };
 
+/**
+ * Clone the vector.
+ *
+ * @return {Vector}
+ */
 Vector.prototype.clone = function() {
     return new Vector(this.x, this.y);
 };
 
-function Logo(p, r, dir) {
-    this.p = p;
-    this.r = r;
-    this.mass = r * 0.0003;
-    this.forces = [dir, G.clone()];
+/**
+ * Represents the Zicht logo.
+ *
+ * @param {Vector} position
+ * @param {number} radius
+ * @param {Vector} direction
+ * @constructor
+ */
+function Logo(position, radius, direction) {
+    this.p = position;
+    this.r = radius;
+    this.mass = radius * 0.0003;
+    this.forces = [direction, G.clone()];
     this.shade = 0;
     this.angle = 0;
     this.spin = 0;
 }
 
+/**
+ * Draw the logo on the given canvas context
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ */
 Logo.prototype.draw = function(ctx) {
     ctx.lineWidth = this.r / 5.5;
     ctx.lineCap = 'round';
@@ -61,20 +96,31 @@ Logo.prototype.draw = function(ctx) {
     ctx.restore();
 };
 
+/**
+ * Spawn a new logo at the given coordinates.
+ *
+ * @param {number} x
+ * @param {number} y
+ */
 function spawn(x, y) {
+    // random angle pointing upward for happy effect.
     var a = Math.PI / 4 + (Math.PI / 2 * Math.random()), e;
     if (world.length >= MAX) {
         return;
     }
 
-    e = new Logo(
+    world.push(new Logo(
         new Vector(x, y),
         10 + Math.random() * 50,
         new Vector(Math.cos(a) * 15, -Math.sin(a) * 15)
-    );
-    world.push(e);
+    ));
 }
 
+/**
+ * Create the canvas
+ *
+ * @returns {HTMLCanvasElement}
+ */
 function init() {
     var interval = null, mx, my;
 
@@ -88,14 +134,14 @@ function init() {
     canvas.onclick = function(e) {
         spawn(e.offsetX, e.offsetY);
     };
-    //canvas.onmousedown = function(e) {
-    //    if (interval) {
-    //        return;
-    //    }
-    //    interval = setInterval(function() {
-    //        spawn(mx, my);
-    //    }, 40);
-    //};
+    canvas.onmousedown = function(e) {
+        if (interval) {
+            return;
+        }
+        interval = setInterval(function() {
+            spawn(mx, my);
+        }, 40);
+    };
     canvas.onmouseup = function() {
         clearInterval(interval);
         interval = null;
@@ -108,7 +154,12 @@ function init() {
     return canvas;
 }
 
-function run() {
+/**
+ * Get the engine running
+ *
+ * @param {HTMLCanvasElement} canvas
+ */
+function run(canvas) {
     setInterval(function() {
         requestAnimationFrame(function() {
             var ctx = canvas.getContext('2d');
