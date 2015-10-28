@@ -1,11 +1,15 @@
-var G = new vector(0, 0.4); // gravity
-var B = 0.8; // bounciness
+var G = new vector(0, 0.8),
+    CANVAS = new vector(window.innerWidth, window.innerHeight), // gravity
+    MAX = 1000,
+    B = 0.8, // bounciness
+    world = [],
+    canvas = document.createElement('canvas');
 
-var world = [];
-var canvas = document.createElement('canvas');
-
-canvas.width = 500;
-canvas.height = 500;
+canvas.style.position = 'absolute';
+canvas.style.left = 0;
+canvas.style.top = 0;
+canvas.width = CANVAS.x;
+canvas.height = CANVAS.y;
 
 document.body.appendChild(canvas);
 
@@ -21,10 +25,15 @@ vector.prototype.add = function(v) {
     this.y += v.y;
 }
 
+vector.prototype.clone = function() {
+    return new vector(this.x, this.y);
+}
+
 function logo(p, r, dir) {
     this.p = p;
     this.r = r;
-    this.dir = dir;
+    this.mass = r;
+    this.forces = [dir, G.clone()];
 }
 
 logo.prototype.draw = function(ctx) {
@@ -46,11 +55,14 @@ logo.prototype.draw = function(ctx) {
 
 function spawn(x, y) {
     var a = Math.PI / 4 + (Math.PI / 2 * Math.random());
-    return new logo(
+    if (world.length >= MAX) {
+        return;
+    }
+    world.push(new logo(
         new vector(x, y),
         10 + Math.random() * 50,
         new vector(Math.cos(a) * 10, -Math.sin(a) * 10)
-    );
+    ));
 }
 
 var interval = null, mx, my;
@@ -59,11 +71,11 @@ canvas.onmousedown = function(e) {
         return;
     }
     interval = setInterval(function() {
-        world.push(spawn(mx, my));
+        spawn(mx, my);
     }, 40);
 }
 canvas.onclick = function(e) {
-    world.push(spawn(e.offsetX, e.offsetY));
+    spawn(e.offsetX, e.offsetY);
 }
 canvas.onmousemove = function(e) {
     mx = e.offsetX;
@@ -86,33 +98,35 @@ function each(w, fn) {
 setInterval(function() {
     var i = 0;
 
-    each(world, function(o) {
-        // apply resistance
-        var m = Math.sqrt(o.dir.x * o.dir.x + o.dir.y * o.dir.y);
-
-        var t = Math.atan2(o.dir.y, o.dir.x);
-        o.dir.x = Math.cos(t) * m * 0.98;
-        o.dir.y = Math.sin(t) * m * 0.98;
-
-        if (o.p.y + o.r > 499) {
-            o.dir.y = o.dir.y * -B;
-            o.p.y -= (o.p.y + o.r - 499) * B;
-        }
-        if (o.p.x - o.r < 0) {
-            o.dir.x = o.dir.x * -B;
-            o.p.x += -(o.p.x - o.r) * B;
-        }
-        if (o.p.x + o.r > 499) {
-            o.dir.x = o.dir.x * -B;
-            o.p.x -= (o.p.x + o.r - 499) * B;
-        }
-
-        o.p.add(o.dir);
-        o.dir.add(G);
-    });
-
     requestAnimationFrame(function() {
-        ctx.clearRect(0, 0, 500, 500);
+        each(world, function(o) {
+            var resultant = o.forces[0];
+            resultant.add(o.forces[1]);
+            o.forces[1].y += o.mass * 0.0003;
+            o.p.add(resultant);
+            if (o.p.y + o.r >= CANVAS.y && resultant.y > 0) {
+                resultant.y *= -B;
+            }
+            if (o.p.y + o.r >= CANVAS.y && Math.abs(resultant.y) < 1) {
+                resultant.y = 0;
+                o.forces[1].y = 0;
+            }
+
+            if (o.p.x + o.r >= CANVAS.x || o.p.x - o.r < 0) {
+                resultant.x *= -1;
+            }
+            // floor friction
+            if (o.forces[1].y == 0) {
+                resultant.x *= 0.8;
+                if(Math.abs(resultant.x) < 0.1) {
+                    resultant.x = 0;
+                }
+            }
+            
+            o.forces[0] = resultant;
+        });
+
+        ctx.clearRect(0, 0, CANVAS.x, CANVAS.y);
         each(world, function(o) {
             o.draw(ctx);
         });
