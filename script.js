@@ -61,7 +61,6 @@ Vector.prototype.clone = function() {
 function Logo(position, radius, direction) {
     this.p = position;
     this.r = radius;
-    this.mass = radius * 0.0003;
     this.forces = [direction, G.clone()];
     this.shade = 0;
     this.angle = 0;
@@ -172,11 +171,11 @@ function run(canvas) {
         fc ++;
         fps = (time - start) / fc;
         ctx.font = "12px Arial";
-        ctx.fillText(Math.floor(fps) + " fps", 14, 14);
+        ctx.fillText(Math.floor(fps) + " fps, objects: " + world.length, 14, 14);
 
         var remove = [];
         each(world, function (o, i) {
-            var resultant = o.forces[0];
+            var resultant = o.forces[0], tmp;
             if (resultant.x == 0 && resultant.y == 0) {
                 o.shade += 1;
                 if (o.shade >= 127) {
@@ -187,24 +186,32 @@ function run(canvas) {
             } else {
                 // Apply gravitational force
                 resultant.add(o.forces[1]);
-                o.forces[1].y += o.mass;
-
-                o.p.add(resultant);
-
                 // apply spin to angle
                 o.angle += o.spin;
+                // add current vector
+                o.p.add(resultant);
 
+                // check collision with floor
                 if (o.p.y + o.r >= CANVAS.y && resultant.y > 0) {
+                    // apply correction. This is actually cheating somewhat
+                    o.p.y = CANVAS.y - o.r;
+
+                    // bounce back
                     resultant.y *= -B;
-                    // effect
+
+                    // add some frictional effect. Should be done with a force as well, but what the hey...
                     o.spin += resultant.x / 100;
                 }
+
+                // check collision with walls
                 if (
                     (o.p.x + o.r >= CANVAS.x && resultant.x > 0)
                     || (o.p.x - o.r <= 0 && resultant.x < 0
                     )) {
+                    // bounce back
                     resultant.x *= -B;
-                    // effect
+
+                    // add some frictional effect. Should be done with a force as well, but what the hey...
                     o.spin += resultant.y / 100;
                 }
                 if (o.p.y + o.r >= CANVAS.y && Math.abs(resultant.y) <= 1) {
@@ -212,10 +219,11 @@ function run(canvas) {
                     resultant.y = 0;
                     o.forces[1].y = 0;
                 }
-                // floor friction
+
                 if (o.forces[1].y == 0) {
+                    // floor friction
                     resultant.x *= 0.95;
-                    o.spin = resultant.x / 15;
+                    o.spin = resultant.x / 16;
                     if (Math.abs(resultant.x) < 0.1) {
                         resultant.x = 0;
                     }
@@ -232,7 +240,6 @@ function run(canvas) {
         each(world, function (o) {
             o.draw(ctx);
         });
-
         requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
