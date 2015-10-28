@@ -115,34 +115,34 @@ function run() {
                         o.shade = 0;
                         remove.unshift(i);
                     }
-                }
-
-                resultant.add(o.forces[1]);
-                o.forces[1].y += o.mass;
-                o.p.add(resultant);
-                if (o.p.y + o.r >= CANVAS.y && resultant.y > 0) {
-                    resultant.y *= -B;
-                }
-                if (
-                    (o.p.x + o.r >= CANVAS.x && resultant.x > 0)
-                    || (o.p.x - o.r <= 0 && resultant.x < 0
-                )) {
-                    resultant.x *= -B;
-                }
-                if (o.p.y + o.r >= CANVAS.y && Math.abs(resultant.y) <= 1) {
-                    // lying on the floor now.
-                    resultant.y = 0;
-                    o.forces[1].y = 0;
-                }
-                // floor friction
-                if (o.forces[1].y == 0) {
-                    resultant.x *= 0.8;
-                    if(Math.abs(resultant.x) < 0.1) {
-                        resultant.x = 0;
+                } else {
+                    resultant.add(o.forces[1]);
+                    o.forces[1].y += o.mass;
+                    o.p.add(resultant);
+                    if (o.p.y + o.r >= CANVAS.y && resultant.y > 0) {
+                        resultant.y *= -B;
                     }
-                }
+                    if (
+                        (o.p.x + o.r >= CANVAS.x && resultant.x > 0)
+                        || (o.p.x - o.r <= 0 && resultant.x < 0
+                    )) {
+                        resultant.x *= -B;
+                    }
+                    if (o.p.y + o.r >= CANVAS.y && Math.abs(resultant.y) <= 1) {
+                        // lying on the floor now.
+                        resultant.y = 0;
+                        o.forces[1].y = 0;
+                    }
+                    // floor friction
+                    if (o.forces[1].y == 0) {
+                        resultant.x *= 0.95;
+                        if(Math.abs(resultant.x) < 0.1) {
+                            resultant.x = 0;
+                        }
+                    }
 
-                o.forces[0] = resultant;
+                    o.forces[0] = resultant;
+                }
             });
 
             each(remove, function(i) {
