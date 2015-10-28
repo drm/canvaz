@@ -160,65 +160,80 @@ function init() {
  * @param {HTMLCanvasElement} canvas
  */
 function run(canvas) {
-    setInterval(function() {
-        requestAnimationFrame(function() {
-            var ctx = canvas.getContext('2d');
+    var fc = 0;
+    var fps = 0;
+    var start = null;
+    var ctx = canvas.getContext('2d');
+    var animate = function (time) {
+        ctx.clearRect(0, 0, CANVAS.x, CANVAS.y);
+        if (null === start) {
+            start = time;
+        }
+        fc ++;
+        fps = (time - start) / fc;
+        ctx.font = "12px Arial";
+        ctx.fillText(Math.floor(fps) + " fps", 14, 14);
 
-            var remove = [];
-            each(world, function(o, i) {
-                var resultant = o.forces[0];
-                if (resultant.x == 0 && resultant.y == 0) {
-                    o.shade += 1;
-                    if (o.shade >= 127) {
-                        o.shade = 0;
+        var remove = [];
+        each(world, function (o, i) {
+            var resultant = o.forces[0];
+            if (resultant.x == 0 && resultant.y == 0) {
+                o.shade += 1;
+                if (o.shade >= 127) {
+                    o.shade = 0;
 
-                        remove.unshift(i);
-                    }
-                } else {
-                    resultant.add(o.forces[1]);
-                    o.forces[1].y += o.mass;
-                    o.angle += o.spin;
-                    o.p.add(resultant);
-
-                    if (o.p.y + o.r >= CANVAS.y && resultant.y > 0) {
-                        resultant.y *= -B;
-                        // effect
-                        o.spin += resultant.x / 100;
-                    }
-                    if (
-                        (o.p.x + o.r >= CANVAS.x && resultant.x > 0)
-                        || (o.p.x - o.r <= 0 && resultant.x < 0
-                    )) {
-                        resultant.x *= -B;
-                        // effect
-                        o.spin += resultant.y / 100;
-                    }
-                    if (o.p.y + o.r >= CANVAS.y && Math.abs(resultant.y) <= 1) {
-                        // lying on the floor now.
-                        resultant.y = 0;
-                        o.forces[1].y = 0;
-                    }
-                    // floor friction
-                    if (o.forces[1].y == 0) {
-                        resultant.x *= 0.95;
-                        o.spin = resultant.x / 15;
-                        if(Math.abs(resultant.x) < 0.1) {
-                            resultant.x = 0;
-                        }
-                    }
-
-                    o.forces[0] = resultant;
+                    remove.unshift(i);
                 }
-            });
+            } else {
+                // Apply gravitational force
+                resultant.add(o.forces[1]);
+                o.forces[1].y += o.mass;
 
-            each(remove, function(i) {
-                world.splice(i, 1);
-            });
+                o.p.add(resultant);
 
-            ctx.clearRect(0, 0, CANVAS.x, CANVAS.y);
-            each(world, function(o) {
-                o.draw(ctx);
-            });
+                // apply spin to angle
+                o.angle += o.spin;
+
+                if (o.p.y + o.r >= CANVAS.y && resultant.y > 0) {
+                    resultant.y *= -B;
+                    // effect
+                    o.spin += resultant.x / 100;
+                }
+                if (
+                    (o.p.x + o.r >= CANVAS.x && resultant.x > 0)
+                    || (o.p.x - o.r <= 0 && resultant.x < 0
+                    )) {
+                    resultant.x *= -B;
+                    // effect
+                    o.spin += resultant.y / 100;
+                }
+                if (o.p.y + o.r >= CANVAS.y && Math.abs(resultant.y) <= 1) {
+                    // lying on the floor now.
+                    resultant.y = 0;
+                    o.forces[1].y = 0;
+                }
+                // floor friction
+                if (o.forces[1].y == 0) {
+                    resultant.x *= 0.95;
+                    o.spin = resultant.x / 15;
+                    if (Math.abs(resultant.x) < 0.1) {
+                        resultant.x = 0;
+                    }
+                }
+
+                o.forces[0] = resultant;
+            }
         });
-    }, 20);
+
+        each(remove, function (i) {
+            world.splice(i, 1);
+        });
+
+        each(world, function (o) {
+            o.draw(ctx);
+        });
+
+        requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
 }
