@@ -200,7 +200,7 @@ function run(canvas) {
                     resultant.y *= -B;
 
                     // add some frictional effect. Should be done with a force as well, but what the hey...
-                    o.spin += resultant.x / 100;
+                    o.spin += resultant.x / 300;
                 }
 
                 // check collision with walls
@@ -212,7 +212,13 @@ function run(canvas) {
                     resultant.x *= -B;
 
                     // add some frictional effect. Should be done with a force as well, but what the hey...
-                    o.spin += resultant.y / 100;
+                    if ((resultant.x > 0 && resultant.y > 0)
+                        || (resultant.x < 0 && resultant.y < 0)
+                    ) {
+                        o.spin += resultant.y / 300;
+                    } else {
+                        o.spin -= resultant.y / 300;
+                    }
                 }
                 if (o.p.y + o.r >= CANVAS.y && Math.abs(resultant.y) <= 1) {
                     // lying on the floor now.
@@ -222,7 +228,7 @@ function run(canvas) {
 
                 if (o.forces[1].y == 0) {
                     // floor friction
-                    resultant.x *= 0.95;
+                    resultant.x *= 0.975;
                     o.spin = resultant.x / 16;
                     if (Math.abs(resultant.x) < 0.1) {
                         resultant.x = 0;
