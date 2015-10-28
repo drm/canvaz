@@ -3,7 +3,6 @@ var G = new vector(0, 0.8),
     MAX = 1000,
     B = 0.8, // bounciness
     world = [],
-    queue = [],
     canvas;
 
 function each(w, fn) {
@@ -56,15 +55,17 @@ logo.prototype.draw = function(ctx) {
 }
 
 function spawn(x, y) {
-    var a = Math.PI / 4 + (Math.PI / 2 * Math.random());
+    var a = Math.PI / 4 + (Math.PI / 2 * Math.random()), e;
     if (world.length >= MAX) {
         return;
     }
-    world.push(new logo(
+
+    e = new logo(
         new vector(x, y),
         10 + Math.random() * 50,
         new vector(Math.cos(a) * 15, -Math.sin(a) * 15)
-    ));
+    );
+    world.push(e);
 }
 
 function init() {
@@ -111,7 +112,7 @@ function run() {
                 if (resultant.x == 0 && resultant.y == 0) {
                     o.shade += 1;
                     if (o.shade >= 127) {
-                        queue.push(o);
+                        o.shade = 0;
                         remove.unshift(i);
                     }
                 }
